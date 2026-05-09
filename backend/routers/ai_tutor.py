@@ -8,7 +8,7 @@ from sqlalchemy import desc
 
 from backend.database import get_db
 from backend.models import User, StudentProfile, ChatSession, ChatMessage
-from backend.schemas import ChatAskResponse, ChatMessageResponse, ChatSessionResponse
+from backend.schemas import ChatAskResponse, ChatMessageResponse, ChatSessionResponse, ChatMessageRequest
 from backend.routers.auth import get_current_user
 
 router = APIRouter(prefix="/ai", tags=["AI Tutor"])
@@ -125,12 +125,12 @@ def ask_tutor(
     if session_id:
         session = db.query(ChatSession).filter(
             ChatSession.id == session_id,
-            ChatSession.user_id == current_user.id
+            ChatSession.student_id == current_user.id
         ).first()
     else:
         # Create new session
         session = ChatSession(
-            user_id=current_user.id,
+            student_id=current_user.id,
             title=f"Chat {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}"
         )
         db.add(session)
@@ -182,7 +182,7 @@ def get_chat_history(
 ):
     """Get all chat sessions for current user."""
     sessions = db.query(ChatSession).filter(
-        ChatSession.user_id == current_user.id
+        ChatSession.student_id == current_user.id
     ).order_by(desc(ChatSession.updated_at)).limit(20).all()
     
     return [
@@ -214,7 +214,7 @@ def delete_chat_session(
     """Delete a chat session."""
     session = db.query(ChatSession).filter(
         ChatSession.id == session_id,
-        ChatSession.user_id == current_user.id
+        ChatSession.student_id == current_user.id
     ).first()
     
     if not session:
